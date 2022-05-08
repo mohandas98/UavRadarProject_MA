@@ -78,6 +78,9 @@ static int32_t MRR_MSS_CLISensorStop (int32_t argc, char* argv[]);
 static int32_t MRR_MSS_CLIBasicCfg (int32_t argc, char* argv[]);
 static int32_t MRR_MSS_CLIAdvancedFrameCfg (int32_t argc, char* argv[]);
 
+//MA
+static int32_t MRR_MSS_CLIMA (int32_t argc, char* argv[]);
+
 /**************************************************************************
  ****************************** CLI Functions *****************************
  **************************************************************************/
@@ -141,6 +144,20 @@ static int32_t MRR_MSS_CLISensorStart (int32_t argc, char* argv[])
         return -1;
     }
 }
+
+
+
+//MA
+
+static int32_t MRR_MSS_CLIMA (int32_t argc, char* argv[])
+{
+
+    CLI_write ("MA Test \n");
+
+    return 0;
+
+}
+
 
 /**
  *  @b Description
@@ -426,7 +443,12 @@ void MRR_MSS_CLIInit (void)
     cliCfg.tableEntry[3].helpString     = "Stop the sensor";
     cliCfg.tableEntry[3].cmdHandlerFxn  = MRR_MSS_CLISensorStop;
 
-    #if 0
+    cliCfg.tableEntry[4].cmd            = "MA";
+    cliCfg.tableEntry[4].helpString     = "TEST";
+    cliCfg.tableEntry[4].cmdHandlerFxn  = MRR_MSS_CLIMA;
+
+
+    #if 1
     /* Open the CLI: */
     if (CLI_open (&cliCfg) < 0)
     {

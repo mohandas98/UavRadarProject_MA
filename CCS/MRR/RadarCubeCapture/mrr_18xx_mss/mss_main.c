@@ -868,6 +868,81 @@ int32_t MmwDemo_mboxWrite(MmwDemo_message     * message)
     return retVal;
 }
 
+#if(1)
+static void MmwDemo_mboxReadTask(UArg arg0, UArg arg1)
+{
+    MmwDemo_message      message;
+    int32_t              retVal = 0;
+
+    //volatile int32_t waitCounter = 0;
+    //unsigned int uiTemp=0xDEADBEEF;
+    uint32_t totalPacketLen;
+
+
+    while(1)
+    {
+
+        Semaphore_pend(gMrrMSSMCB.mboxSemHandle, BIOS_WAIT_FOREVER);
+
+        retVal = Mailbox_read(gMrrMSSMCB.peerMailbox, (uint8_t*)&message, sizeof(MmwDemo_message));
+
+        if (retVal>0)
+        {
+            Mailbox_readFlush (gMrrMSSMCB.peerMailbox);
+
+
+            CLI_write ("DSS Message Received \n");
+
+            /* Send header */
+            totalPacketLen = sizeof(MmwDemo_output_message_header);
+            UART_writePolling (gMrrMSSMCB.loggingUartHandle,
+                               (uint8_t*)&message.body.detObj.header,
+                               sizeof(MmwDemo_output_message_header));
+
+            CLI_write ("Batch %d \n",message.body.detObj.header.version);
+
+
+            // Send TLV type and length
+            UART_writePolling (gMrrMSSMCB.loggingUartHandle,
+                               (uint8_t*)&message.body.detObj.tlv[0],
+                               sizeof(MmwDemo_output_message_tl));
+
+
+            UART_writePolling (gMrrMSSMCB.loggingUartHandle,
+                           (uint8_t*)SOC_translateAddress(message.body.detObj.tlv[0].address, SOC_TranslateAddr_Dir_FROM_OTHER_CPU,NULL),
+                           message.body.detObj.tlv[0].length);
+
+
+            CLI_write ("DSS Message Transmitted \n");
+
+
+            //UART_writePolling (gMrrMSSMCB.loggingUartHandle,
+              //                                       (uint8_t*)&uiTemp,
+                //                                     sizeof(unsigned int));
+
+            /* Send a message to MSS to log the output data */
+            memset((void *)&message, 0, sizeof(MmwDemo_message));
+
+            message.type = MMWDEMO_MSS2DSS_DETOBJ_SHIPPED;
+
+            retVal = MmwDemo_mboxWrite(&message);
+
+
+
+        }
+
+
+
+
+    }
+
+
+
+
+
+}
+#endif
+
 /**
  *  @b Description
  *  @n
@@ -882,6 +957,11 @@ int32_t MmwDemo_mboxWrite(MmwDemo_message     * message)
  *  @retval
  *      Not Applicable.
  */
+
+#if(0)
+
+//Original code
+
 static void MmwDemo_mboxReadTask(UArg arg0, UArg arg1)
 {
     MmwDemo_message      message;
@@ -1030,6 +1110,8 @@ static void MmwDemo_mboxReadTask(UArg arg0, UArg arg1)
         }
     }
 }
+
+#endif
 
 /**
  *  @b Description

@@ -51,6 +51,13 @@
 #include "../common/mrr_config_consts.h"
 #include "EKF_XYZ_Consts.h"
 
+
+//MA
+#define LOGGING_CODE
+//#define CANNED_ADC_SAMPLES
+//#define CANNED_FFT_SAMPLES
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif

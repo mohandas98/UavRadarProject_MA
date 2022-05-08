@@ -132,6 +132,16 @@ Mrr_DSS_MCB gMrrDSSMCB;
 
 volatile cycleLog_t gCycleLog;
 
+//MA
+uint32_t uiLogCounter;
+
+//MA
+#define TOTAL_COMPLEX 262144
+#define BATCH_SIZE_COMPLEX TOTAL_COMPLEX/32
+#define BATCH_SIZE_BYTES BATCH_SIZE_COMPLEX*4
+#define NUM_OF_BATCHES 32
+
+
 /**************************************************************************
  *************************** Local Definitions ****************************
  **************************************************************************/
@@ -165,8 +175,20 @@ static void MRR_DSS_frameStartIntCallback(uintptr_t arg);
 static int32_t MRR_DSS_SendProcessOutputToMSS(uint8_t *ptrHsmBuffer,
                                                  uint32_t outputBufSize,
                                                  MmwDemo_DSS_DataPathObj *obj);
+
+static int32_t MRR_DSS_SendPacket_Radarcube_MA(uint8_t *ptrHsmBuffer,
+                                                 uint32_t outputBufSize,
+                                                 MmwDemo_DSS_DataPathObj *obj);
 static void MRR_DSS_DataPathOutputLogging(MmwDemo_DSS_DataPathObj * dataPathObj);
+
+static void MRR_DSS_SendEntireRadarCubeToMSS_MA(MmwDemo_DSS_DataPathObj * dataPathObj);
+
+
+
 static void MmwDemo_mboxReadProc();
+
+static void MmwDemo_mboxReadProcMA();
+
 void MmwDemo_mboxCallback(Mbox_Handle handle, Mailbox_Type peer);
 
 /* external sleep function when in idle (used in .cfg file) */
@@ -269,6 +291,46 @@ static void MRR_DSS_mmWaveTask(UArg arg0, UArg arg1)
             {
                 MmwDemo_waitEndOfChirps(dataPathObj, gMrrDSSMCB.subframeIndx);
 
+
+                /* Sending detected objects to logging buffer */
+#ifdef LOGGING_CODE
+#if(1)
+
+                //MA- Wait for 100 frames before capturing (100 is arbitrary)
+                if (gMrrDSSMCB.stats.frameStartIntCounter>100)
+                {
+
+
+
+
+#if(0)
+                    //Load test data into radrcube
+                    uint32_t tempc=0;
+                    cmplx16ReIm_t *pRadarCube = dataPathObj->radarCube;
+                    for (tempc=0; tempc<262144 ; tempc++)
+                    {
+                        pRadarCube[tempc].imag=tempc;
+                        pRadarCube[tempc].real=tempc;
+
+                    }
+#endif
+
+                    while(1)
+                    {
+                        //Send the entire radar cube in parts of 1024 bytes
+
+                        MRR_DSS_SendEntireRadarCubeToMSS_MA(dataPathObj);
+
+
+
+                    }
+                }
+
+
+
+#endif
+#endif
+
                 dataPathObj->cycleLog.interChirpProcessingTime = gCycleLog.interChirpProcessingTime;
                 dataPathObj->cycleLog.interChirpWaitTime = gCycleLog.interChirpWaitTime;
                 gCycleLog.interChirpProcessingTime = 0;
@@ -283,8 +345,16 @@ static void MRR_DSS_mmWaveTask(UArg arg0, UArg arg1)
                 gCycleLog.interFrameProcessingTime = 0;
                 gCycleLog.interFrameWaitTime = 0;
 
-                /* Sending detected objects to logging buffer */
+
+
+
+
+
+
+                //MA
+                #ifndef LOGGING_CODE
                 MRR_DSS_DataPathOutputLogging(dataPathObj);
+                #endif
                 dataPathObj->timingInfo.interFrameProcessingEndTime = Cycleprofiler_getTimeStamp();
 
                 /* Update the subframeIndx */
@@ -369,6 +439,9 @@ int32_t main(void)
     Task_Params taskParams;
     MmwDemo_DSS_DataPathObj* obj;
     int32_t errCode, ik;
+
+    //MA
+    uiLogCounter=0;
 
     /* Initialize the global variables */
     memset((void*) &gMrrDSSMCB, 0, sizeof(Mrr_DSS_MCB));
@@ -696,6 +769,29 @@ static int32_t MmwDemo_mboxWrite(MmwDemo_message *message)
     return retVal;
 }
 
+
+
+
+static void MmwDemo_mboxReadProcMA()
+{
+    MmwDemo_message      message;
+    int32_t              retVal = 0;
+
+    
+
+    while(retVal==0)
+    {
+
+        retVal = Mailbox_read(gMrrDSSMCB.peerMailbox, (uint8_t*)&message, sizeof(MmwDemo_message));
+
+    }
+
+    // Flush the message
+    Mailbox_readFlush (gMrrDSSMCB.peerMailbox);
+
+}
+
+
 /**
  *  @b Description
  *  @n
@@ -792,6 +888,119 @@ void MmwDemo_mboxCallback
     gMrrDSSMCB.mboxProcToken = 1;
 }
 
+
+//MA
+
+void MRR_DSS_SendEntireRadarCubeToMSS_MA(MmwDemo_DSS_DataPathObj * dataPathObj)
+{
+
+   // volatile int32_t waitCounter = 0;
+
+    //Send a Mailbox packet to MSS
+        //Wait for response
+        //Send another packet
+        //Repeat this
+
+        while(1)
+        {
+
+            if ( uiLogCounter < NUM_OF_BATCHES)
+            {
+
+                //Send a test packet of N bytes
+                MRR_DSS_SendPacket_Radarcube_MA((uint8_t *) &gHSRAM, (uint32_t) SOC_XWR18XX_DSS_HSRAM_SIZE,
+                                                                dataPathObj);
+
+                //Confirm if packet was shipped
+                MmwDemo_mboxReadProcMA();
+
+
+                ++uiLogCounter;
+
+                if (uiLogCounter==NUM_OF_BATCHES)
+                {
+                    uiLogCounter=0;
+
+                }
+
+            }
+
+
+
+        }
+
+
+
+}
+
+
+//MA
+
+int32_t MRR_DSS_SendPacket_Radarcube_MA(uint8_t *ptrHsmBuffer,
+                                                 uint32_t outputBufSize,
+                                                 MmwDemo_DSS_DataPathObj *obj)
+{
+
+    uint8_t* ptrCurrBuffer;
+    uint32_t totalHsmSize = 0;
+    uint32_t totalPacketLen = sizeof(MmwDemo_output_message_header);
+    uint32_t itemPayloadLen;
+    int32_t retVal = 0;
+    MmwDemo_message message;
+    uint32_t tlvIdx = 0;
+
+
+
+/* Set pointer to HSM buffer */
+     ptrCurrBuffer = ptrHsmBuffer;
+
+     /* Clear message to MSS */
+     memset((void*)&message, 0, sizeof(MmwDemo_message));
+     message.type = MMWDEMO_DSS2MSS_DETOBJ_READY;
+
+     /* Header: */
+     message.body.detObj.header.platform = obj->numRangeBins;
+     message.body.detObj.header.magicWord[0] = 0x0102;
+     message.body.detObj.header.magicWord[1] = 0x0304;
+     message.body.detObj.header.magicWord[2] = 0x0506;
+     message.body.detObj.header.magicWord[3] = 0x0708;
+     message.body.detObj.header.numDetectedObj = obj->numRxAntennas;
+     //message.body.detObj.header.version = MMWAVE_SDK_VERSION_BUILD | (MMWAVE_SDK_VERSION_BUGFIX << 8) | (MMWAVE_SDK_VERSION_MINOR << 16) | (MMWAVE_SDK_VERSION_MAJOR << 24);
+     message.body.detObj.header.version = uiLogCounter;
+
+
+     itemPayloadLen=BATCH_SIZE_BYTES;
+
+     totalHsmSize += itemPayloadLen;
+
+     if (totalHsmSize > outputBufSize)
+     {
+         retVal = -1;
+         goto Exit;
+     }
+
+     int8_t *tempRadarPtr=(int8_t *)obj->radarCube;
+
+     memcpy(ptrCurrBuffer,(void *) &tempRadarPtr[(uiLogCounter*BATCH_SIZE_BYTES)], itemPayloadLen);
+     //memcpy(ptrCurrBuffer,(void *) &obj->radarCube[(uiLogCounter*BATCH_SIZE_BYTES)], itemPayloadLen);
+
+
+     message.body.detObj.tlv[tlvIdx].length = itemPayloadLen;
+     message.body.detObj.tlv[tlvIdx].type =
+         MMWDEMO_OUTPUT_MSG_DETECTED_POINTS;
+     message.body.detObj.tlv[tlvIdx].address = (uint32_t)ptrCurrBuffer;
+     if (MmwDemo_mboxWrite(&message) != 0)
+     {
+         retVal = -1;
+     }
+
+
+
+    Exit: return retVal;
+
+
+
+}
 /**
  *  @b Description
  *  @n
