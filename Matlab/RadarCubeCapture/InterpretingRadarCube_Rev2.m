@@ -36,7 +36,7 @@ B=reshape(A,[sampleLenInBytes,...  %d1
 %Get any 1DFFT             
 d2=1; % chirp# could be any of the 128 chirps
 d3=1;   % rxAnt#
-d4=2;   % Fast=1, slow=2
+d4=1;   % Fast=1, slow=2
 
 for k=1:1:numRangeBins
     
