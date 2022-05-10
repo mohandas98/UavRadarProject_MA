@@ -22,7 +22,7 @@ for i=1:length(indStart),
     SIdx=indStart(i);
 
     %read version
-    version(i) = getUint32(a(SIdx-1+9:SIdx-1+12))
+    version(i) = getUint32(a(SIdx-1+9:SIdx-1+12));
 
     %skip 44;
     index=SIdx+44;
@@ -50,6 +50,29 @@ for i=1:length(indStart),
 
 
 end
+
+
+
+%Convert to complex (4 bytes per complex)
+N=length(MaRadarCubeRaw)/4;
+i=1;
+for k=1:1:N
+    
+    a=MaRadarCubeRaw(i);
+    b=MaRadarCubeRaw(i+1);
+    fReal=getInt16([a b]);
+    
+    a=MaRadarCubeRaw(i+2);
+    b=MaRadarCubeRaw(i+3);
+    fImag=getInt16([a b]);
+    i=i+4;
+    
+    RadarCubeCpx(k)=fReal + 1i*fImag;
+    
+end
+
+%Overwrite so that other files can use the same variable name
+MaRadarCubeRaw=RadarCubeCpx;
 
 save('MaRadarCubeRaw.mat','MaRadarCubeRaw')
 

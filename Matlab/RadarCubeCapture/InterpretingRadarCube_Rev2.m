@@ -1,7 +1,6 @@
-%There are 4 Rx Antennas and 256 chirps
-%There are 2 types of chirp (Fast and Slow)
+%Changes:
+% MA: Reinterpret radarcube as an multidimension array of complex numbers
 
-%Changes from rev 0: Fixing bug with fast and slow chirp
 
 clc
 clearvars
@@ -13,22 +12,13 @@ load('Mrr_2D_Window.mat')
 
 fs=4652e3;
 
-% N=length(MaRadarCubeRaw);
-% 
-% for k=1:1:N
-%     MaRadarCubeRaw(k)=k;
-% end
-
-
 A=MaRadarCubeRaw;
-sampleLenInBytes=4;
 numDopplerBins=128;
 numRxAnt=4;
 numChirpTypes=2;
 numRangeBins=256;
 
-B=reshape(A,[sampleLenInBytes,...  %d1
-             numDopplerBins,...    %d2
+B=reshape(A,[numDopplerBins,...    %d2
              numRxAnt,...          %d3
              numChirpTypes,...     %d4
              numRangeBins]);       %d5
@@ -40,21 +30,15 @@ d4=1;   % Fast=1, slow=2
 
 for k=1:1:numRangeBins
     
-    a=B(1,d2,d3,d4,k);
-    b=B(2,d2,d3,d4,k);
-    fReal(k)=getInt16([a b]);
+    fCpx(k)=B(d2,d3,d4,k);
     
-    a=B(3,d2,d3,d4,k);
-    b=B(4,d2,d3,d4,k);
-    fImag(k)=getInt16([a b]);
 end
 
 
 N=256;
 x=(-(N/2):1:(N/2-1));             
 
-fftout=fReal+1i*fImag;
-plot(x,abs(fftshift(fftout)))
+plot(x,abs(fftshift(fCpx)))
 
 %Get samples for all rangebins
 
@@ -66,16 +50,8 @@ SampleCtr=1;
 for m=1:1:numRangeBins
     for k=1:1:numDopplerBins
         
-        a=B(1,k,d3,d4,m);
-        b=B(2,k,d3,d4,m);
-        fReal2D(SampleCtr)=getInt16([a b]);
+        rfft(m,k)=B(k,d3,d4,m);
         
-        a=B(3,k,d3,d4,m);
-        b=B(4,k,d3,d4,m);
-        fImag2D(SampleCtr)=getInt16([a b]);
-        
-        rfft(m,k) = fReal2D(SampleCtr) + 1i*fImag2D(SampleCtr);        
-        SampleCtr=SampleCtr+1;
     end
 end
 

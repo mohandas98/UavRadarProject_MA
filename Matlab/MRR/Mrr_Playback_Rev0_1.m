@@ -39,9 +39,11 @@ detDopplerLines.currentIndex=0;
 
 numDetDopplerLine1D=0;
 
+temp1=zeros(256,10);
+temp2=zeros(256,10);
 
 %----Processing inside function MmwDemo_interFrameProcessing
-for rangeIdx=1:1:numRangeBins;
+for rangeIdx=1:1:numRangeBins
     
     %Perform 2D FFT and add from all the Rx antennas
     sumAbs=secondDimFFTandLog2Computation(rangeIdx);
@@ -51,6 +53,10 @@ for rangeIdx=1:1:numRangeBins;
     cfarDebObjSNR]=cfarCa_SO_dBWrap_withSNR_MA(sumAbs,numDopplerBins,...
                                                DopplerthresholdScale,noiseDivShift,...
                                                guardLen,winLen);
+    
+    temp1(rangeIdx,1:length(cfarDetObjIndexBuf))=cfarDetObjIndexBuf(1:length(cfarDetObjIndexBuf));                                           
+    temp2(rangeIdx,1:length(cfarDebObjSNR))=cfarDebObjSNR(1:length(cfarDebObjSNR));                                           
+   
 
     %Reduce the detected objects to peaks    
     %pruneToPeaks 
