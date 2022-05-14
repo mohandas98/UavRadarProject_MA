@@ -198,8 +198,8 @@ stem(anglebins,temp)
 %Range AOA plot
 %Get rangexangle matrix
 
-N=numRxAntennas;
-%N=64;
+%N=numRxAntennas;
+N=64;
 
 for k=1:1:numRangeBins
     
