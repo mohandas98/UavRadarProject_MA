@@ -27,18 +27,19 @@ B=reshape(A,[numDopplerBins,...    %d2
 d2=1; % chirp# could be any of the 128 chirps
 d3=1;   % rxAnt#
 d4=1;   % Fast=1, slow=2
+% 
+% for k=1:1:numRangeBins
+%     
+%     fCpx(k)=B(d2,d3,d4,k);
+%     
+% end
 
-for k=1:1:numRangeBins
-    
-    fCpx(k)=B(d2,d3,d4,k);
-    
-end
+MetersPerBin=0.681445313;
 
+fCpx=squeeze(B(d2,d3,d4,1:numRangeBins));
+rangebins=(0:1:numRangeBins-1)*MetersPerBin;
 
-N=256;
-x=(-(N/2):1:(N/2-1));             
-
-plot(x,abs(fftshift(fCpx)))
+plot(rangebins,20*log10(abs(fCpx)))
 
 %Get samples for all rangebins
 

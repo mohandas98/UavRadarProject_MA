@@ -56,72 +56,98 @@ numDopplerBins=SUBFRAME_MRR_CHIRPTYPE_0_NUM_CHIRPS;
 
 Tc=TcUs*1e-6;
 
+%-----------Angle parameters-------------
+numRxAntennas=4;
+RxAntSpacing=lamdaInMeter/2;
+RxAntPos=(0:1:numRxAntennas-1)*RxAntSpacing;
+
+
+%----------radarcube-------------------
+numChirpTypes=2;
+%d1=dopplerbin
+%d2=RxAnt
+%d3=chirp type (1=fast, 2=slow)
+%d4=Rangebins
+radarcube=zeros(numDopplerBins,numRxAntennas,numChirpTypes,numRangeBins);
+
+
 %-----Target parameters
-NumOfTargets =2;
-r=[50 100];  % in meters
+NumOfTargets =1;
+%r=[50 100];  % in meters
 %r=[MetersPerBin*50 MetersPerBin*25];
+OnBinRange=50;
+r=MetersPerBin*OnBinRange;
 fr=r*OneMeterRoundTripHz;  % Target in frequency
 InitialPhase=(4*pi*r)/lamdaInMeter;   %Eq 7 of MmWave Fundamentals TI doc
-v=[5 -2]; %m/s
+%v=[5 -2]; %m/s
 %v=[MpsPerBin*10 MpsPerBin*(-10)];
+OnBinVel=10;
+v=MpsPerBin*OnBinVel;
+
+Aoa_rad= 30*pi/180;
+Aoa_deg=(Aoa_rad*180)/pi;
+RxPhaseDiff=(2*pi/lamdaInMeter)*RxAntPos*sin(Aoa_rad); %in radians
 
 
 deltaphase=(4*pi*v*Tc)/lamdaInMeter;  %Eq 10 of MmWave Fundamentals TI doc
 
 t=(0:1:numRangeBins-1)*(1/fs);
 
-for k=1:1:numDopplerBins
+for m=1:1:numRxAntennas
     
-    AdcOut=0;
-    for i=1:1:NumOfTargets
+    for k=1:1:numDopplerBins
         
-        temp=exp(1i*((2*pi*fr(i)*t)+InitialPhase(i)+(k-1)*deltaphase(i)));
-        AdcOut=AdcOut+temp;
-        
-    end
-    
-   
-    OneDfft(:,k)=fft(AdcOut);
-    
-    
-end
-
-%Convert to 16 bit integer
-OneDfftFxd=fix(OneDfft*2^15-1);
-numRxAnt=4;
-numChirpTypes=2;
-%Put it into radarcube multidimension
-radarcube=zeros(numDopplerBins,numRxAnt,numChirpTypes,numRangeBins);
-for k=1:1:numDopplerBins
-    for l=1:1:numRxAnt
-        for m=1:1:numChirpTypes
-            StartIdx = ((m-1)*numRangeBins)+1;
-            EndIdx = StartIdx+numRangeBins-1;
-            radarcube(k,l,m,:)=OneDfftFxd(StartIdx:EndIdx);
+        AdcOut=0;
+        for i=1:1:NumOfTargets
+            
+            temp=exp(1i*((2*pi*fr(i)*t)+InitialPhase(i)+(k-1)*deltaphase(i)));
+            
+            %Apply Antenna phase shift
+            temp=temp.*exp(1i*RxPhaseDiff(m));
+            
+            AdcOut=AdcOut+temp;
+            
         end
-    end
+        
+        %Convert to fixed point
+        OneDfftTemp=fft(AdcOut);
+        %OneDfftFxd=fix(OneDfftTemp*2^15-1);
+        
+        %move it to radarcube (load only fast chirp)
+        radarcube(k,m,1,:)=OneDfftTemp;
+        
+        
+        
+    end    
+ 
+    
 end
 
 
 
-%BCode below is only for plotting
-if(0)
+%plot range-doppler image
+%d1=dopplerbin
+d2=1;%RxAnt
+d3=1;%chirp type (1=fast, 2=slow)
+%d4=Rangebins
 
-%Perform 2D FFT
 for k=1:1:numRangeBins
     
-    TwoDfft(k,:)=fftshift(fft(OneDfft(k,:)));
-    %TwoDfft(k,:)=(fft(OneDfft(k,:)));
+    DopplerBins = squeeze(radarcube(:,d2,d3,k));
+    
+    TwoDfft(k,:)=fftshift(fft(DopplerBins));
+    
     
 end
 
 
-%plot range fft
-ChirpNum=1;
-rangefft=OneDfft(:,ChirpNum);
+%plot range-doppler
+d1=1;% dopplerbin
+%rangefft=OneDfft(:,ChirpNum);
+rangefft = squeeze(radarcube(d1,d2,d3,:));
 rangebins=(0:1:numRangeBins-1)*MetersPerBin;
 %plot(rangebins,20*log10(abs(rangefft)))
-plot(rangebins,(abs(rangefft)))
+%plot(rangebins,(abs(rangefft)))
 
 %plot Doppler fft
 Rangebin=51;
@@ -129,9 +155,9 @@ dopfft = (TwoDfft(Rangebin,:));
 %doppbins = (-(numDopplerBins/2):1:(numDopplerBins/2)-1)*(MpsPerBin);% Need to check why /2 (fudge factor)
 %doppbins = 0:1:numDopplerBins-1;
 doppbins=(-(numDopplerBins/2):1:(numDopplerBins/2)-1)*MpsPerBin;
-figure
+%figure
 %plot(doppbins,20*log10(abs(dopfft)))
-plot(doppbins,(abs(dopfft)))
+%plot(doppbins,(abs(dopfft)))
 
 temp=20*log10(abs(TwoDfft));
 %temp=abs(TwoDfft);
@@ -142,21 +168,72 @@ xlabel('m/s')
 ylabel('meters')
 title('Range-Doppler-Plot')
 
-% figure
-% image(rangebins,doppbins,temp.')
-% colorbar
-% ylabel('m/s')
-% xlabel('meters')
-% title('Range-Doppler-Plot')
 
-% AdcOut=exp(1i*((2*pi*fr*t)+Phase));
+%plot range-azimuth aoa
+rangeIdx=OnBinRange+1;
+doppIdx=OnBinVel+(numDopplerBins/2)+1;
 
-% f=fftshift(fft(AdcOut));
-% N=256;
-% x=(-N/2:1:(N/2)-1)*(fs/N);
-% plot(x,20*log10(abs(f)))
-
+%TI method: 1- Perform 2D FFT of range-doppler intersection
+for m=1:1:numRxAntennas
+    
+    %Get all doppler bins for rangeidx
+    doppbins=squeeze(radarcube(:,m,1,rangeIdx));
+    %perform fft
+    temp=fftshift(fft(doppbins));
+    %get the range-doppler intersection
+    RangeDoppAnt(m)=temp(doppIdx);
 end
+
+%Do angle fft
+N=numRxAntennas;
+RangeAngleFFT=fftshift(fft(RangeDoppAnt,N));
+temp=abs(RangeAngleFFT);
+x=(-N/2:1:(N/2)-1);
+aoa_x_rad=asin(2*x/N);
+aoa_x_deg=(aoa_x_rad*180)/pi;
+anglebins=aoa_x_deg;
+figure
+stem(anglebins,temp)
+
+%Range AOA plot
+%Get rangexangle matrix
+
+N=numRxAntennas;
+%N=64;
+
+for k=1:1:numRangeBins
+    
+    %Get all range from any Doppler
+    AntBins =squeeze(radarcube(1,:,1,k));
+    RangeAngleFFT(k,:)=fftshift(fft(AntBins,N));
+    
+end
+
+%Plot range angle
+
+
+
+%temp=20*log10(abs(RangeAngleFFT));
+
+
+temp=abs(RangeAngleFFT);
+rangebins=(0:1:numRangeBins-1)*MetersPerBin;
+x=(-N/2:1:(N/2)-1);
+aoa_x_rad=asin(2*x/N);
+aoa_x_deg=(aoa_x_rad*180)/pi;
+anglebins=aoa_x_deg;
+figure
+stem(anglebins,temp(rangeIdx,:))
+
+if(1)
+figure    
+image(anglebins,rangebins,temp,'CDataMapping','scaled')
+colorbar
+xlabel('Degree')
+ylabel('meters')
+title('Range-Angle-Plot')
+end
+
 
 
 
