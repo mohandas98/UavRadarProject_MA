@@ -4,8 +4,8 @@ clear all; close all;
  %%  port numbers
     logFile.path = '';
     %logFile.name = ['mmwavelib_windowing16x32.log'];
-    logFile.name = ['RadarCubeActualTest.log'];
-    comPort.data = 4;
+    logFile.name = ['.log'];
+    comPort.data = 4;From9thFloor
     comPort.status = 0;
 
 %% INIT SERIAL PORTS

@@ -1,7 +1,7 @@
 clc;clear all; close all;
 %fname = 'xwr18xx_processed_stream_2022_02_17T12_58_39_243.dat';
 %fname = 'mm_demo_try1.log';
-fname='RadarCubeActualTest.log';
+fname='From9thFloor.log';
 
 %fname='RadarCube_Counting.log';
 fid = fopen(fname,'r');

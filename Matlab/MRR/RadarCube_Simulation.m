@@ -185,7 +185,8 @@ for m=1:1:numRxAntennas
 end
 
 %Do angle fft
-N=numRxAntennas;
+%N=numRxAntennas;
+N=64;
 RangeAngleFFT=fftshift(fft(RangeDoppAnt,N));
 temp=abs(RangeAngleFFT);
 x=(-N/2:1:(N/2)-1);
@@ -198,8 +199,8 @@ stem(anglebins,temp)
 %Range AOA plot
 %Get rangexangle matrix
 
-%N=numRxAntennas;
-N=64;
+
+
 
 for k=1:1:numRangeBins
     
