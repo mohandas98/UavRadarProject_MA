@@ -7,8 +7,8 @@ clearvars
 close all
 
 %load('MaRadarCubeRaw.mat')
-%load('MaRadarCubeRaw_OutsideWindow_9thFloor.mat')
-load('MaRadarCubeRaw_OutsideWindow_22ndFloor.mat')
+load('MaRadarCubeRaw_OutsideWindow_9thFloor.mat')
+%load('MaRadarCubeRaw_OutsideWindow_22ndFloor.mat')
 load('Mrr_2D_Window.mat')
 
 fs=4652e3;

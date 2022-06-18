@@ -123,7 +123,7 @@ for k=1:1:len
     if(inp(k)>thld)   
         outIdx=outIdx+1;
         out(outIdx)=k;
-        temp = sum*(2^(const2-1));
+        temp = sum/(2^(const2-1));
         outSNR(outIdx)=inp(k)-temp;
     end
     

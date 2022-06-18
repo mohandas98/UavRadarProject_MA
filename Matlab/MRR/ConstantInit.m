@@ -28,6 +28,12 @@ CFARTHRESHOLD_N_BIT_FRAC=8;
 DopplerthresholdScale=convertSNRdBtoThreshold(numInteg,SUBFRAME_MRR_MIN_SNR_dB...
                               ,CFARTHRESHOLD_N_BIT_FRAC);
                           
+                         
+%Rangebin CFAR parameters
+noiseDivShiftRange
+guardLenRange
+winLenRange                          
+                          
                           
 %--Doppler Line Mask---
 % detDopplerLines.dopplerLineMask=zeros(1,max(numDopplerBins/32,1));

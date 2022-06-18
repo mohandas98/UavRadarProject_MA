@@ -7,6 +7,7 @@ function output = PerformWindowing(input,win)
 % output_imag[n]=round(input_imag[n]*window[n]/2^15)
 
 %input is complex
+input=input.';
 output=(input.*win)./(2^15);
 
 

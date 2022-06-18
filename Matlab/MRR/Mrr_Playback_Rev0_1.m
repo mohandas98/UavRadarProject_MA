@@ -52,15 +52,13 @@ for rangeIdx=1:1:numRangeBins
     [numDetObjPerCfar,cfarDetObjIndexBuf,...
     cfarDebObjSNR]=cfarCa_SO_dBWrap_withSNR_MA(sumAbs,numDopplerBins,...
                                                DopplerthresholdScale,noiseDivShift,...
-                                               guardLen,winLen);
-    
-    temp1(rangeIdx,1:length(cfarDetObjIndexBuf))=cfarDetObjIndexBuf(1:length(cfarDetObjIndexBuf));                                           
-    temp2(rangeIdx,1:length(cfarDebObjSNR))=cfarDebObjSNR(1:length(cfarDebObjSNR));                                           
-   
+                                               guardLen,winLen);                                           
+     
+    %temp1(rangeIdx,1:length(cfarDetObjIndexBuf))=cfarDetObjIndexBuf(1:length(cfarDetObjIndexBuf));                                           
+    %temp2(rangeIdx,1:length(cfarDebObjSNR))=cfarDebObjSNR(1:length(cfarDebObjSNR)); 
+     
 
-    %Reduce the detected objects to peaks    
-    %pruneToPeaks 
-    %TODO: function to implement
+    %Reduce the detected objects to peaks        
     numDetObjPerCfar=pruneToPeaks(cfarDetObjIndexBuf,cfarDebObjSNR,...
                                   numDetObjPerCfar,sumAbs,numDopplerBins);
                               
@@ -92,20 +90,32 @@ end
 %Perform CFAR detection along range lines. Only those doppler bins which
 %were detected in the earlier CFAR along doppler dimension are considered
 
-% if( numDetDopplerLine1D>0 )
-%     
-%     %Move first doppler line
-%     dopplerLine=detDopplerLines.dopplerLineMask(detDopplerLines.currentIndex)
-%     sumAbsRange=detMatrix(:,dopplerLine);
-%     
-%     
-% end
+if( numDetDopplerLine1D>0 )
+    
+    for detIdx1=1:1:numDetDopplerLine1D
+        
+        %Move first doppler line
+        detDopplerLines.currentIndex=detDopplerLines.currentIndex+1;
+        dopplerLine=detDopplerLines.dopplerLineMask(detDopplerLines.currentIndex)
+        sumAbsRange=detMatrix(:,dopplerLine);
+        
+        %Perform range cfar
+        [numDetObjPerCfar,cfarDetObjIndexBuf,...
+        cfarDebObjSNR]= cfarCadB_SO_withSNR(sumAbsRange,numRangeBins,...
+                                            
+        
+        
+        
+    end
+    
+    
+end
 
 
 %Plot detMatrix
 MetersPerBin=0.681445313;
-rangebins=(0:1:numRangeBins-1)*MetersPerBin;
-%rangebins=(0:1:numRangeBins-1);
+%rangebins=(0:1:numRangeBins-1)*MetersPerBin;
+rangebins=(0:1:numRangeBins-1);
 
 MpsPerBin=0.237190451;
 %doppbins=(-(numDopplerBins/2):1:(numDopplerBins/2)-1)*MpsPerBin;
