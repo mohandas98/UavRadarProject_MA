@@ -62,6 +62,9 @@ for rangeIdx=1:1:numRangeBins
     numDetObjPerCfar=pruneToPeaks(cfarDetObjIndexBuf,cfarDebObjSNR,...
                                   numDetObjPerCfar,sumAbs,numDopplerBins);
                               
+    %findKLargestPeaks    
+                              
+                              
     %Decide which doppler 'gates' are to be subjected to the range-CFAR.
     %We only need to do so if a detected object from the doppler-CFAR is
     %detected at that 'doppler gate'
