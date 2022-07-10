@@ -98,8 +98,7 @@ for k=1:1:len
         sumRight=sum(inp(tempNoiseRightStart:tempNoiseRightEnd));
     end
     if(skipLeft==0)
-        %sumLeft=sum(inp(tempNoiseLeftStart:tempNoiseLeftEnd));
-        sumLeft=sum(inp(tempNoiseLeftEnd:tempNoiseLeftStart));
+        SumLeft=sum(inp(tempNoiseLeftStart:tempNoiseLeftEnd));
     end
     
     
@@ -115,7 +114,7 @@ for k=1:1:len
         %only right side
         sumTotal= sumRight;
         
-    elseif ((skipRight==1) && (skipLeft==0) )
+    elseif ((skipRight==0) && (skipLeft==1) )
         %only left side
         sumTotal= sumLeft;
         
@@ -131,7 +130,6 @@ for k=1:1:len
     cfarIndices(k,11)=sumRight;
     cfarIndices(k,12)=sumTotal;
     cfarIndices(k,13)=thld;
-    cfarIndices(k,14)=inp(k);
     
     
     if(inp(k)>thld)

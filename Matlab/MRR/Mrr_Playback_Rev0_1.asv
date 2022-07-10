@@ -144,7 +144,7 @@ if( numDetDopplerLine1D>0 )
         %Move first doppler line
 %         detDopplerLines.currentIndex=detDopplerLines.currentIndex+1;
 %         dopplerLine=detDopplerLines.dopplerLineMask(detDopplerLines.currentIndex);
-        sumAbsRange=detMatrix(:,DopplerLinesIdx(detIdx1));
+        sumAbsRange=detMatrix(:,DopplerLinesIdx(detIdx1);
         
         %Perform range cfar
         [numDetObjPerCfar,cfarDetObjIndexBuf,...

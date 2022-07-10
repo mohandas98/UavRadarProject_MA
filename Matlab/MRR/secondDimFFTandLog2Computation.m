@@ -1,5 +1,7 @@
 function sumAbs = secondDimFFTandLog2Computation(rangeIdx)
 
+%This function performs 2D FFT
+
 global numRxAnt numTxAnt numDopplerBins radarcube
 global Mrr_Win2D
 
@@ -10,10 +12,10 @@ for rxAntIdx=1:1:numRxAnt*numTxAnt
     %Get all Dopplerbins for the randeIdx and rxAntIdx        
     dstPingPong=GetAllDopplerBins(rangeIdx,rxAntIdx);
     
-    %Perform 2D windowing
+    %Perform 2D windowing (mmwavelib_windowing16x32)
     windowingBuf2D=PerformWindowing(dstPingPong,Mrr_Win2D);   
         
-    %Perform 2D FFT
+    %Perform 2D FFT (DSP_fft32x32)
     %TODO: Check on the scalling 
     fftOut2D=fft(windowingBuf2D);
     
