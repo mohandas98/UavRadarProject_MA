@@ -8,9 +8,10 @@ global radarcube
 global DopplerthresholdScale noiseDivShift guardLen winLen
 global detDopplerLines
 global MAX_NUM_DET_PER_RANGE_GATE
-global detObj1DRaw
+global detObj1DRaw detObj2DRaw
 global log2numVirAnt
 global noiseDivShiftRange guardLenRange winLenRange RangethresholdScale
+global detObj2D
 
 ConstantInit;
 
@@ -33,7 +34,8 @@ detMatrix=zeros(numRangeBins,numDopplerBins);
 
 
 %load the radarcube
-load('MaRadarCubeRaw_OutsideWindow_22ndFloor.mat')
+%load('MaRadarCubeRaw_OutsideWindow_22ndFloor.mat')
+load('MaRadarCubeRaw_OutsideWindow_9thFloor.mat')
 %load('RadarCubeCanned.mat')
 radarcube = ReInterpretRadarCube(MaRadarCubeRaw);
 
@@ -42,6 +44,7 @@ detDopplerLines.dopplerLineMask=zeros(1,numDopplerBins);
 detDopplerLines.currentIndex=0;
 
 numDetObj1D=0;
+numDetObj2D=0;
 numDetDopplerLine1D=0;
 
 temp1=zeros(256,10);
@@ -88,7 +91,7 @@ for rangeIdx=1:1:numRangeBins
         detObj1DRaw(detObj1DRawIdx).dopplerIdx=cfarDetObjIndexBuf(detIdx1);
         detObj1DRaw(detObj1DRawIdx).rangeIdx=rangeIdx;
         detObj1DRaw(detObj1DRawIdx).dopplerSNRdB=cfarDetObjSNR(detIdx1)/(2^log2numVirAnt);
-        
+        detObj1DRaw(detObj1DRawIdx).velDisambFacValidity=1;
         
         %MRR code determines the quadratic fit from the Doppler bin to
         %estimate the velocity. TODO: Explain why we don't need to do this
@@ -98,7 +101,7 @@ for rangeIdx=1:1:numRangeBins
     end
     
     %This may not be needed. TODO: Analyse this
-    for detIdx1=numDetObjPerCfar:1:MAX_NUM_DET_PER_RANGE_GATE
+    for detIdx1=numDetObjPerCfar+1:1:MAX_NUM_DET_PER_RANGE_GATE
         
         detObj1DRawIdx = (rangeIdx-1)*MAX_NUM_DET_PER_RANGE_GATE + detIdx1;
         detObj1DRaw(detObj1DRawIdx).velDisambFacValidity=-2;
@@ -142,21 +145,48 @@ if( numDetDopplerLine1D>0 )
     for detIdx1=1:1:numDetDopplerLine1D
         
         %Move first doppler line
-%         detDopplerLines.currentIndex=detDopplerLines.currentIndex+1;
-%         dopplerLine=detDopplerLines.dopplerLineMask(detDopplerLines.currentIndex);
+        %         detDopplerLines.currentIndex=detDopplerLines.currentIndex+1;
+        %         dopplerLine=detDopplerLines.dopplerLineMask(detDopplerLines.currentIndex);
         sumAbsRange=detMatrix(:,DopplerLinesIdx(detIdx1));
         
         %Perform range cfar
         [numDetObjPerCfar,cfarDetObjIndexBuf,...
-        cfarDebObjSNR]= cfarCadB_SO_withSNR(sumAbsRange,numRangeBins,...
-                         RangethresholdScale,...
-                         noiseDivShiftRange,...
-                         guardLenRange,...
-                         winLenRange);
+            cfarDetObjSNR]= cfarCadB_SO_withSNR(sumAbsRange,numRangeBins,...
+            RangethresholdScale,...
+            noiseDivShiftRange,...
+            guardLenRange,...
+            winLenRange);
+        
+        if( numDetObjPerCfar > 0)
+            
+            
+            numDetObjPerCfar=pruneToPeaks(cfarDetObjIndexBuf,cfarDetObjSNR,...
+                numDetObjPerCfar,sumAbsRange,numRangeBins);
+            
+            numDetObj2D=findandPopulateIntersectionOfDetectedObjects(...
+                         cfarDetObjIndexBuf,...
+                         numDetObj2D,...
+                         DopplerLinesIdx(detIdx1),...
+                         cfarDetObjSNR,...
+                         numDetObjPerCfar,...
+                         sumAbsRange);
                          
+            
+            
+            
+        end
+        
+        
+        
         
     end
 end
+
+
+numDetObj2D=rangeBasedPruning(numDetObj2D);
+
+
+
 
 
 %Plot detMatrix
