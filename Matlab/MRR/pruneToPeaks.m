@@ -30,6 +30,7 @@ for detIdx=1:1:numDetObjPerCfar
         nextIdx = currObjLoc + 1;
     end
     
+    %Only accept a peak if the adjoining bins are lower in magnitude
     
     if( (sumAbs(nextIdx) < sumAbs(currObjLoc))...
          && (sumAbs(prevIdx) < sumAbs(currObjLoc)))

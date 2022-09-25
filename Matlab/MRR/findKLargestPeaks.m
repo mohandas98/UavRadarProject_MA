@@ -5,6 +5,8 @@ function [numDetObjPerCfar,cfarDetObjIndexBuf,cfarDetObjSNR] =...
                                     sumAbs,...
                                     K)
 
+                                
+ %Find the top K returns in the Doppler bins based in only signal strength                               
 
 
 if(numDetObjPerCfar <= 1)

@@ -1,6 +1,6 @@
 clc
 clearvars
-close all
+%close all
 
 
 global sampleLenInBytes numDopplerBins numRxAnt numChirpTypes numRangeBins
@@ -34,8 +34,8 @@ detMatrix=zeros(numRangeBins,numDopplerBins);
 
 
 %load the radarcube
-%load('MaRadarCubeRaw_OutsideWindow_22ndFloor.mat')
-load('MaRadarCubeRaw_OutsideWindow_9thFloor.mat')
+load('MaRadarCubeRaw_OutsideWindow_22ndFloor.mat')
+%load('MaRadarCubeRaw_OutsideWindow_9thFloor.mat')
 %load('RadarCubeCanned.mat')
 radarcube = ReInterpretRadarCube(MaRadarCubeRaw);
 
@@ -63,19 +63,20 @@ for rangeIdx=1:1:numRangeBins
     [numDetObjPerCfar,cfarDetObjIndexBuf,...
     cfarDetObjSNR]=cfarCa_SO_dBWrap_withSNR_MA(sumAbs,numDopplerBins,...
                                                DopplerthresholdScale,noiseDivShift,...
-                                               guardLen,winLen);                                           
+                                               guardLen,winLen)                                         
     
     %These three variables are overwritten for every range bin
     %numDetObjPerCfar
     %cfarDetObjIndexBuf
     %cfarDebObjSNR
      
-    %temp1(rangeIdx,1:length(cfarDetObjIndexBuf))=cfarDetObjIndexBuf(1:length(cfarDetObjIndexBuf));                                           
-    %temp2(rangeIdx,1:length(cfarDebObjSNR))=cfarDebObjSNR(1:length(cfarDebObjSNR)); 
+    temp1(rangeIdx,1:length(cfarDetObjIndexBuf))=cfarDetObjIndexBuf(1:length(cfarDetObjIndexBuf));                                           
+    temp2(rangeIdx,1:length(cfarDetObjSNR))=cfarDetObjSNR(1:length(cfarDetObjSNR)); 
      
 
     %Reduce the detected objects to peaks        
-    numDetObjPerCfar=pruneToPeaks(cfarDetObjIndexBuf,cfarDetObjSNR,...
+    [numDetObjPerCfar,cfarDetObjIndexBuf,cfarDetObjSNR]=...
+        pruneToPeaks(cfarDetObjIndexBuf,cfarDetObjSNR,...
                                   numDetObjPerCfar,sumAbs,numDopplerBins);
                               
     %findKLargestPeaks
@@ -90,6 +91,8 @@ for rangeIdx=1:1:numRangeBins
         detObj1DRawIdx = (rangeIdx-1)*MAX_NUM_DET_PER_RANGE_GATE + detIdx1;
         detObj1DRaw(detObj1DRawIdx).dopplerIdx=cfarDetObjIndexBuf(detIdx1);
         detObj1DRaw(detObj1DRawIdx).rangeIdx=rangeIdx;
+        %TI code right shifts by log2numVirAnt, we divide by
+        %2^log2numVirAnt
         detObj1DRaw(detObj1DRawIdx).dopplerSNRdB=cfarDetObjSNR(detIdx1)/(2^log2numVirAnt);
         detObj1DRaw(detObj1DRawIdx).velDisambFacValidity=1;
         
@@ -157,11 +160,19 @@ if( numDetDopplerLine1D>0 )
             guardLenRange,...
             winLenRange);
         
+        
+        
+        
         if( numDetObjPerCfar > 0)
             
             
             numDetObjPerCfar=pruneToPeaks(cfarDetObjIndexBuf,cfarDetObjSNR,...
                 numDetObjPerCfar,sumAbsRange,numRangeBins);
+            
+            
+            plot(sumAbsRange)
+        hold on
+        plot(cfarDetObjIndexBuf,sumAbsRange(cfarDetObjIndexBuf),'*')
             
             numDetObj2D=findandPopulateIntersectionOfDetectedObjects(...
                          cfarDetObjIndexBuf,...
