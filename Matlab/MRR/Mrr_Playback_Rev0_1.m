@@ -34,8 +34,8 @@ detMatrix=zeros(numRangeBins,numDopplerBins);
 
 
 %load the radarcube
-load('MaRadarCubeRaw_OutsideWindow_22ndFloor.mat')
-%load('MaRadarCubeRaw_OutsideWindow_9thFloor.mat')
+%load('MaRadarCubeRaw_OutsideWindow_22ndFloor.mat')
+load('MaRadarCubeRaw_OutsideWindow_9thFloor.mat')
 %load('RadarCubeCanned.mat')
 radarcube = ReInterpretRadarCube(MaRadarCubeRaw);
 
