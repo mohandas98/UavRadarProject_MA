@@ -24,7 +24,10 @@ Prx = PtxdBm + GtxdBi + GrxdBi + 10*log10(ThetaAzRad) + 10*log10(ThetaElRad)...
     + 10*log10(pi/4)+10*log10(lamda^2)-(10*log10(((4*pi)^3)*(R.^2)));
 
 %Signal to Noise density
-Snr = Prx-(EstNoisePwrdBm-10*log10(256));
+Snr = Prx-EstNoisePwrdBm;
+
+%Signal to Noise density
+SnrDensity = Prx-(EstNoisePwrdBm-10*log10(256));
 
 %Convert to Ti
 
