@@ -10,9 +10,12 @@ N=256;               % Number of samples
 
 %Sweep through SNR Noise Density
 
+%load Range vs SNR density
+load('RangeVsSNRandSNRdensity.mat')
 
-SNR_dB = -15:1:50;          % Commonly referred as power ratio  
 
+%SNR_dB = -15:1:50;          % Commonly referred as power ratio  
+SNR_dB =Snr;
 
 SNR = 10.^(SNR_dB/10);
 
@@ -22,7 +25,11 @@ SignalPower =SNR*NoisePower;
 
 %Generate a complex sinusoid
 Amp = sqrt(SignalPower);  % This would be sqrt(SignalPowe/2) if only real samples
-F1  = 0.125;               %cycles per sample or Fs*F1 Hz
+
+
+%F1 = 32*(1/N); % on bin
+
+F1 = 32.1*(1/N); % on bin
 
 %loop through all amps
 k=length(Amp);
@@ -77,7 +84,8 @@ EstSnrDensity = 10*log10(EstSigAmp^2/EstNoisePowerDensity)
 fTil = log2(abs(fscaled));
 [EstSigAmpLog2,index] = max(fTil);  % Signal Amp
 clog=mean(fTil([1:index-1 index+1:N])); % Noise Amp Density
-TiSnr(i) = EstSigAmpLog2-clog
+TiSnr(i) = EstSigAmpLog2-clog   %TiSnr is what is reported by TI SW as
+                                %SNR
 EstSnrDensityLog2(i) = 20*log10(2)*TiSnr(i)
 
 diff(i)=EstSnrDensityLog2(i)-ActSnrD(i);
@@ -92,6 +100,20 @@ TiSnrq8(i) = EstSigAmpLog2q8-clogq8
 
 end
 
+%Expected SNRdensity in log2
+TiSnrExp = log2(10.^(SnrDensity/20));
+EstimationError = abs(TiSnrExp-TiSnr);
+figure
+plot(SnrDensity,EstimationError)
+title('SNR Density Estimation Error')
+xlabel('Actual SNRDensity dB')
+ylabel('Ti SNR Density Estimation Error')
+grid
+
+%plot(R,TiSnr)
+
+
+figure
 plot(ActSnrD,EstSnrDensityLog2)
 title('Actual SNRDensity vs Ti SNRDensity in Log10')
 xlabel('Actual SNRDensity dB')
